@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -37,7 +39,7 @@ import io.restassured.response.Response;
 public class BaseTestCaseUtil extends BaseStep{
 	public static HashMap<String, String> pridsAndRids=new LinkedHashMap<String, String>();
 	public static HashMap<String, String> uinReqIds = new LinkedHashMap<String, String>();
-	public static Properties props = new AdminTestUtil().getproperty(TestRunner.getExeternalResourcePath()+"/config/test-orchestrator_mz.properties");
+	public static Properties props = new AdminTestUtil().getproperty(TestRunner.getExternalResourcePath()+"/config/test-orchestrator_mz.properties");
 	public String baseUrl=props.getProperty("packetUtilityBaseUrl");
 	public static HashMap<String, String> residentTemplatePaths = new LinkedHashMap<String, String>();
 	public static HashMap<String, String> residentPathsPrid = new LinkedHashMap<String, String>();
@@ -64,6 +66,17 @@ public class BaseTestCaseUtil extends BaseStep{
 	public static String uin_updateResident=null;
 	public static String prid_updateResident=null;
 	public BaseTestCaseUtil() {}
+	
+	public String getDateTime() {
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MMddHHmmssSSS");
+		LocalDateTime now = LocalDateTime.now();
+		return "DSL"+dtf.format(now);
+	}
+	public String getDateTimePrint() {
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-mmm-yyyy hh:mm:ss.s");
+		LocalDateTime now = LocalDateTime.now();
+		return "DSL Time: "+dtf.format(now);
+	}
 	
 	public String encoder(String text) {
 		return Base64.getEncoder().encodeToString(text.getBytes());

@@ -4,8 +4,8 @@ UpdateRegistrationCenter:
       role: admin
       templateFields: ["name","addressLine1","addressLine2","addressLine3","timeZone","langCode"]
       restMethod: put
-      inputTemplate: masterdata/RegistrationCenter/registrationCenter
-      outputTemplate: masterdata/RegistrationCenter/registrationCenterResult
+      inputTemplate: ivv_masterdata/RegistrationCenter/registrationCenter
+      outputTemplate: ivv_masterdata/RegistrationCenter/registrationCenterResult
       input: '{
     "addressLine1": "HSR",
     "addressLine2": "Venkatapura",
@@ -42,8 +42,8 @@ UpdateRegistrationCenter:
       role: admin
       templateFields: ["name","addressLine1","addressLine2","addressLine3","timeZone"]
       restMethod: put
-      inputTemplate: masterdata/RegistrationCenter/registrationCenter
-      outputTemplate: masterdata/error
+      inputTemplate: ivv_masterdata/RegistrationCenter/registrationCenter
+      outputTemplate: ivv_masterdata/error
       input: '{
     "addressLine1": "HSR",
     "addressLine2": "Venkatapura",
@@ -86,8 +86,8 @@ UpdateRegistrationCenter:
       role: admin
       templateFields: ["name","addressLine1","addressLine2","addressLine3","timeZone"]
       restMethod: put
-      inputTemplate: masterdata/RegistrationCenter/registrationCenter
-      outputTemplate: masterdata/error
+      inputTemplate: ivv_masterdata/RegistrationCenter/registrationCenter
+      outputTemplate: ivv_masterdata/error
       input: '{
     "addressLine1": "WhiteField",
     "addressLine2": "whiteBoard",
@@ -129,8 +129,8 @@ UpdateRegistrationCenter:
       role: admin
       templateFields: ["name","addressLine1","addressLine2","addressLine3","timeZone"]
       restMethod: put
-      inputTemplate: masterdata/RegistrationCenter/registrationCenter
-      outputTemplate: masterdata/error
+      inputTemplate: ivv_masterdata/RegistrationCenter/registrationCenter
+      outputTemplate: ivv_masterdata/error
       input: '{
     "addressLine1": "WhiteField",
     "addressLine2": "whiteBoard",

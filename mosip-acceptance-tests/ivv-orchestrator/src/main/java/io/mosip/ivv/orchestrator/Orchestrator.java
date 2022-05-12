@@ -56,7 +56,7 @@ public class Orchestrator {
 
 	@BeforeSuite
 	public void beforeSuite() {
-		this.properties = Utils.getProperties(TestRunner.getExeternalResourcePath() + "/config/config.properties");
+		this.properties = Utils.getProperties(TestRunner.getExternalResourcePath() + "/config/config.properties");
 		this.configToSystemProperties();
 		Utils.setupLogger(System.getProperty("user.dir") + this.properties.getProperty("ivv._path.auditlog"));
 		/* setting exentreport */
@@ -82,7 +82,7 @@ public class Orchestrator {
 	@DataProvider(name = "ScenarioDataProvider", parallel = false)
 	public static Object[][] dataProvider() throws RigInternalError {
 		String scenarioSheet = null;
-		String configFile = TestRunner.getExeternalResourcePath() + "/config/config.properties";
+		String configFile = TestRunner.getExternalResourcePath() + "/config/config.properties";
 		Properties properties = Utils.getProperties(configFile);
 		scenarioSheet = System.getProperty("scenarioSheet");
 		if (scenarioSheet == null || scenarioSheet.isEmpty())
@@ -96,7 +96,7 @@ public class Orchestrator {
 				TestRunner.getGlobalResourcePath() + "/" + properties.getProperty("ivv.path.biometrics.folder"));
 		parserInputDTO.setPersonaSheet(
 				TestRunner.getGlobalResourcePath() + "/" + properties.getProperty("ivv.path.persona.sheet"));
-		parserInputDTO.setScenarioSheet(TestRunner.getExeternalResourcePath()
+		parserInputDTO.setScenarioSheet(TestRunner.getExternalResourcePath()
 				+ properties.getProperty("ivv.path.scenario.sheet.folder") + scenarioSheet);
 		parserInputDTO.setRcSheet(
 				TestRunner.getGlobalResourcePath() + "/" + properties.getProperty("ivv.path.rcpersona.sheet"));
@@ -149,7 +149,9 @@ public class Orchestrator {
 	@Test(dataProvider = "ScenarioDataProvider")
 	private void run(int i, Scenario scenario, HashMap<String, String> configs, HashMap<String, String> globals,
 			Properties properties) throws SQLException {
+		extent.flush();
 		String tags = System.getProperty("ivv.tags");
+		String identifier =null;
 		if (tags == null || tags.isEmpty()) {
 			Utils.auditLog.info("Running Scenario #" + scenario.getId());
 		} else if (!matchTags(tags, scenario.getTags())) {
@@ -157,11 +159,11 @@ public class Orchestrator {
 			throw new SkipException("Skipping Scenario #" + scenario.getId());
 		}
 		ObjectMapper mapper = new ObjectMapper();
-		try {
-			String stepsAsString = mapper.writeValueAsString(scenario.getSteps());
-		} catch (JsonProcessingException e) {
-			e.printStackTrace();
-		}
+//		try {
+//			String stepsAsString = mapper.writeValueAsString(scenario.getSteps());
+//		} catch (JsonProcessingException e) {
+//			e.printStackTrace();
+//		}
 		Utils.auditLog.info("");
 		message = "Scenario_" + scenario.getId() + ": " + scenario.getDescription();
 		Utils.auditLog.info("-- *** Scenario " + scenario.getId() + ": " + scenario.getDescription() + " *** --");
@@ -176,7 +178,8 @@ public class Orchestrator {
 		Reporter.log("<b><u>" + "Scenario_" + scenario.getId() + ": " + scenario.getDescription() + "</u></b>");
 		for (Scenario.Step step : scenario.getSteps()) {
 			Utils.auditLog.info("");
-			String identifier = "> #[Test Step: " + step.getName() + "] [module: " + step.getModule() + "] [variant: "
+		
+			 identifier = "> #[Test Step: " + step.getName() + "] [Test Parameters: " + step.getParameters() + "]  [Test outVarName: " + step.getOutVarName() + "] [module: " + step.getModule() + "] [variant: "
 					+ step.getVariant() + "]";
 			Utils.auditLog.info(identifier);
 
@@ -190,6 +193,7 @@ public class Orchestrator {
 				st.setStep(step);
 				st.setup();
 				st.validateStep();
+				Reporter.log("\n\n\n\n=============="+ "[Test Step: " + step.getName() + "] [Test Parameters: " + step.getParameters() + "] " + "================ \n\n\n\n\n", true);
 				st.run();
 				
 				st.assertHttpStatus();
