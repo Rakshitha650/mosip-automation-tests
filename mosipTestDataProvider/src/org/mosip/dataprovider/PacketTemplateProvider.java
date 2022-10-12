@@ -21,6 +21,7 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
 
+import org.apache.tools.ant.property.GetProperty;
 import org.javatuples.Pair;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -41,6 +42,7 @@ import org.mosip.dataprovider.util.CommonUtil;
 import org.mosip.dataprovider.util.DataProviderConstants;
 import org.mosip.dataprovider.util.Gender;
 import org.mosip.dataprovider.util.Translator;
+import org.springframework.beans.factory.annotation.Value;
 
 import com.google.gson.JsonObject;
 
@@ -53,6 +55,7 @@ import variables.VariableManager;
 /*
  * Generate Packet structure for a given Resident record
  */
+
 @SuppressWarnings("unchecked")
 public class PacketTemplateProvider {
 
@@ -62,18 +65,25 @@ public class PacketTemplateProvider {
 	public static String RID_EVIDENCE = "rid_evidence";
 	public static String RID_OPTIONAL = "rid_optional";
 
-	Hashtable<Double, Properties> allSchema = MosipMasterData.getIDSchemaLatestVersion();
-
-	Double schemaVersion = allSchema.keys().nextElement();
+//	Hashtable<Double, Properties> allSchema = MosipMasterData.getIDSchemaLatestVersion("contextKey");
+//
+//	Double schemaVersion = allSchema.keys().nextElement();
+//	
+//	List<MosipIDSchema> schema = (List<MosipIDSchema>) allSchema.get(schemaVersion).get("schemaList");
+//	List<String> requiredAttribs = (List<String>) allSchema.get(schemaVersion).get("requiredAttributes");
+//	
+	Hashtable<Double, Properties> allSchema = null ;
+	Double schemaVersion = 0.0;
+	List<MosipIDSchema> schema = null;
+	List<String> requiredAttribs = null;
 	
-	List<MosipIDSchema> schema = (List<MosipIDSchema>) allSchema.get(schemaVersion).get("schemaList");
-	List<String> requiredAttribs = (List<String>) allSchema.get(schemaVersion).get("requiredAttributes");
 	
 	private static final String DOMAIN_NAME = ".mosip.net";
 	Properties prop = new Properties();
 
-	public void getSchema() {
-		allSchema = MosipMasterData.getIDSchemaLatestVersion();
+	public void getSchema(String contextKey) {
+		
+		allSchema = MosipMasterData.getIDSchemaLatestVersion(contextKey);
 		schemaVersion = allSchema.keys().nextElement();
 		schema = (List<MosipIDSchema>) allSchema.get(schemaVersion).get("schemaList");
 		requiredAttribs = (List<String>) allSchema.get(schemaVersion).get("requiredAttributes");
@@ -87,7 +97,7 @@ public class PacketTemplateProvider {
 		String ridFolder = "";
 		Path path = Paths.get(rootFolder);
 
-		getSchema();
+		getSchema(contextKey);
 
 		if (!Files.exists(path)) {
 			Files.createDirectory(path);
@@ -136,7 +146,7 @@ public class PacketTemplateProvider {
 		// Generate evidence json
 
 		//String evidenceJson = generateEvidenceJson(resident, fileInfo);
-		String evidenceJson = generateEvidenceJsonV2(resident, fileInfo);
+		String evidenceJson = generateEvidenceJsonV2(resident, fileInfo,contextKey);
 		Files.write(Paths.get(rid_evidence_folder + "/ID.json"), evidenceJson.getBytes());
 		Files.write(Paths.get(rid_evidence_folder + "/packet_meta_info.json"), metadataJson.getBytes());
 
@@ -247,7 +257,7 @@ public class PacketTemplateProvider {
 		return allIdentityDetails;
 	}
 
-	String generateEvidenceJson(ResidentModel resident, HashMap<String, String[]> fileInfo) {
+	String generateEvidenceJson(ResidentModel resident, HashMap<String, String[]> fileInfo,String contextKey) {
 
 		JSONObject identity = new JSONObject();
 
@@ -343,7 +353,7 @@ public class PacketTemplateProvider {
 						}
 
 						updateSimpleType(s.getId(), identity, primValue, secValue, resident.getPrimaryLanguage(),
-								resident.getSecondaryLanguage(), resident.getThirdLanguage());
+								resident.getSecondaryLanguage(), resident.getThirdLanguage(),contextKey);
 
 					}
 					continue;
@@ -355,13 +365,13 @@ public class PacketTemplateProvider {
 				} else {
 					primVal = "Some text value";
 					if (resident.getSecondaryLanguage() != null)
-						secVal = Translator.translate(resident.getSecondaryLanguage(), primVal);
+						secVal = Translator.translate(resident.getSecondaryLanguage(), primVal,contextKey);
 
 				}
 				if (s.getType().equals("simpleType")) {
 
 					updateSimpleType(s.getId(), identity, primVal, secVal, resident.getPrimaryLanguage(),
-							resident.getSecondaryLanguage(), resident.getThirdLanguage());
+							resident.getSecondaryLanguage(), resident.getThirdLanguage(),contextKey);
 
 				} else {
 					identity.put(s.getId(), primVal.equals("") ? JSONObject.NULL : primVal);
@@ -374,7 +384,7 @@ public class PacketTemplateProvider {
 
 	}
 	
-	String generateEvidenceJsonV2(ResidentModel resident, HashMap<String, String[]> fileInfo) {
+	String generateEvidenceJsonV2(ResidentModel resident, HashMap<String, String[]> fileInfo,String contextKey) {
 
 		JSONObject identity = new JSONObject();
 		List<String> missList = resident.getMissAttributes();
@@ -467,7 +477,7 @@ public class PacketTemplateProvider {
 						}
 
 						updateSimpleType(s.getId(), identity, primValue, secValue, resident.getPrimaryLanguage(),
-								resident.getSecondaryLanguage(), resident.getThirdLanguage());
+								resident.getSecondaryLanguage(), resident.getThirdLanguage(), contextKey);
 
 					}
 					continue;
@@ -479,13 +489,13 @@ public class PacketTemplateProvider {
 				} else {
 					primVal = "Some text value";
 					if (resident.getSecondaryLanguage() != null)
-						secVal = Translator.translate(resident.getSecondaryLanguage(), primVal);
+						secVal = Translator.translate(resident.getSecondaryLanguage(), primVal,contextKey);
 
 				}
 				if (s.getType().equals("simpleType")) {
 
 					updateSimpleType(s.getId(), identity, primVal, secVal, resident.getPrimaryLanguage(),
-							resident.getSecondaryLanguage(), resident.getThirdLanguage());
+							resident.getSecondaryLanguage(), resident.getThirdLanguage(), contextKey);
 
 				} else {
 					identity.put(s.getId(), primVal.equals("") ? JSONObject.NULL : primVal);
@@ -581,17 +591,17 @@ public class PacketTemplateProvider {
 	}
 
 	JSONObject updateSimpleType(String id, JSONObject identity, String primValue, String secValue, String primLang,
-			String secLang, String thirdLang) {
+			String secLang, String thirdLang, String contextKey) {
 
 		if (primValue == null)
 			primValue = "Some Text Value";
 
 		if ((secValue == null || secValue.equals("")) && secLang != null && !secLang.equals(""))
-			secValue = Translator.translate(secLang, primValue);
+			secValue = Translator.translate(secLang, primValue,contextKey);
 
 		String thirdValue = "";
 		if (thirdLang != null && !thirdLang.equals(""))
-			thirdValue = Translator.translate(thirdLang, primValue);
+			thirdValue = Translator.translate(thirdLang, primValue,contextKey);
 
 		// array
 		JSONArray ar = new JSONArray();
@@ -625,14 +635,14 @@ public class PacketTemplateProvider {
 		return identity;
 	}
 
-	Boolean generateCBEFF(ResidentModel resident, List<String> bioAttrib, String outFile) throws Exception {
+	Boolean generateCBEFF(ResidentModel resident, List<String> bioAttrib, String outFile,String contextKey) throws Exception {
 
-		String strVal = VariableManager.getVariableValue("usemds").toString();
+		String strVal = VariableManager.getVariableValue(VariableManager.NS_DEFAULT,"usemds").toString();
 		boolean bMDS = Boolean.valueOf(strVal);
 		String cbeff = resident.getBiometric().getCbeff();
 		if (bMDS) {
 			if (cbeff == null) {
-				MDSRCaptureModel capture = BiometricDataProvider.regenBiometricViaMDS(resident);
+				MDSRCaptureModel capture = BiometricDataProvider.regenBiometricViaMDS(resident,contextKey);
 				resident.getBiometric().setCapture(capture.getLstBiometrics());
 				String strCBeff = BiometricDataProvider.toCBEFFFromCapture(bioAttrib, capture, outFile);
 				resident.getBiometric().setCbeff(strCBeff);
@@ -682,7 +692,7 @@ public class PacketTemplateProvider {
 				String secVal = "";
 				
 				//context should set Male/Female code values 
-				Object obj = VariableManager.getVariableValue(resGen.name());
+				Object obj = VariableManager.getVariableValue(VariableManager.NS_DEFAULT,resGen.name());
 				if(obj != null) {
 					genderCode = obj.toString();
 					primVal = secVal = genderCode;
@@ -744,7 +754,7 @@ public class PacketTemplateProvider {
 	}
 
 	public static Pair<String, String> processAddresslines(MosipIDSchema s, ResidentModel resident,
-			JSONObject identity) {
+			JSONObject identity,String contextKey) {
 		String addr = null;
 		String addr_sec="";
 			
@@ -780,14 +790,14 @@ public class PacketTemplateProvider {
 					);
 			
 				if(resident.getSecondaryLanguage() != null)
-					addr_sec =Translator.translate(resident.getSecondaryLanguage(),addr);
+					addr_sec =Translator.translate(resident.getSecondaryLanguage(),addr, contextKey);
 			}
 			else
 			{
 				if(resident.getSecondaryLanguage() != null) {
 					addr_sec = resident.getAddress_seclang()[index];
 					if(addr_sec == null)
-						addr_sec =Translator.translate(resident.getSecondaryLanguage(),addr);
+						addr_sec =Translator.translate(resident.getSecondaryLanguage(),addr,contextKey);
 				
 				}
 				
@@ -824,7 +834,7 @@ public class PacketTemplateProvider {
 
 	}
 
-	private static Boolean updateFromAdditionalAttribute(JSONObject identity, MosipIDSchema s, ResidentModel resident) {
+	private static Boolean updateFromAdditionalAttribute(JSONObject identity, MosipIDSchema s, ResidentModel resident,String contextKey) {
 		Boolean bRet = false;
 		Hashtable<String,String> addtnAttr = resident.getAddtionalAttributes();
 		if(addtnAttr == null) 
@@ -846,7 +856,7 @@ public class PacketTemplateProvider {
 					//	e.printStackTrace();
 					}
 					if(jsonO == null) {
-						String secValue = Translator.translate(resident.getSecondaryLanguage(),value);
+						String secValue = Translator.translate(resident.getSecondaryLanguage(),value,contextKey);
 						CreatePersona.constructNode(identity, s.getId(), resident.getPrimaryLanguage(), resident.getSecondaryLanguage(),
 								value,secValue,true);
 					}
@@ -909,7 +919,7 @@ public class PacketTemplateProvider {
 		return found;
 	}
 
-	String generateIDJson(ResidentModel resident, HashMap<String, String[]> fileInfo) {
+	String generateIDJson(ResidentModel resident, HashMap<String, String[]> fileInfo,String contextKey) {
 
 		String idjson = "";
 
@@ -964,7 +974,7 @@ public class PacketTemplateProvider {
 			if ( !s.getRequired() && !(s.getRequiredOn() != null && s.getRequiredOn().size() > 0)) {
 				continue;
 			}
-			if (updateFromAdditionalAttribute(identity, s, resident)) {
+			if (updateFromAdditionalAttribute(identity, s, resident, contextKey)) {
 				continue;
 			}
 			if (processDynamicFields(s, identity, resident))
@@ -1032,7 +1042,7 @@ public class PacketTemplateProvider {
 						if (secLanguage != null)
 							secValue = "Y";
 					} else {
-						Pair<String, String> addrLines = processAddresslines(s, resident, identity);
+						Pair<String, String> addrLines = processAddresslines(s, resident, identity, contextKey);
 						primaryValue = addrLines.getValue0();
 						secValue = addrLines.getValue1();
 					}
@@ -1084,7 +1094,7 @@ public class PacketTemplateProvider {
 						if (resident.getSkipFinger()) {
 							bioAttrib.removeAll(List.of(DataProviderConstants.schemaFingerNames));
 						}
-						generateCBEFF(resident, bioAttrib, outFile);
+						generateCBEFF(resident, bioAttrib, outFile,contextKey);
 
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
@@ -1114,7 +1124,7 @@ public class PacketTemplateProvider {
 							if (missAttribs != null && !missAttribs.isEmpty())
 								bioAttrib.removeAll(missAttribs);
 
-							generateCBEFF(resident.getGuardian(), bioAttrib, outFile);
+							generateCBEFF(resident.getGuardian(), bioAttrib, outFile,contextKey);
 							// BiometricDataProvider.toCBEFF(bioAttrib,
 							// resident.getGuardian().getBiometric(), outFile);
 
@@ -1189,7 +1199,7 @@ public class PacketTemplateProvider {
 							secGValue = resident.getGuardian().getName_seclang().getFirstName();
 
 						updateSimpleType(s.getId(), identity, primValue, secGValue, resident.getPrimaryLanguage(),
-								resident.getSecondaryLanguage(), resident.getThirdLanguage());
+								resident.getSecondaryLanguage(), resident.getThirdLanguage(),contextKey);
 
 					}
 				} else if (s.getInputRequired() && s.getId().contains("IdentityNumber")) {
@@ -1242,7 +1252,7 @@ public class PacketTemplateProvider {
 				if (primaryValue == null || primaryValue.equals("")) {
 					primaryValue = generateDefaultAttributes(s, resident, identity);
 					if (secLanguage != null) {
-						secValue = Translator.translate(secLanguage, primaryValue);
+						secValue = Translator.translate(secLanguage, primaryValue,contextKey);
 					}
 				}
 
@@ -1251,7 +1261,7 @@ public class PacketTemplateProvider {
 				) {
 
 					updateSimpleType(s.getId(), identity, primaryValue, secValue, primaryLanguage, secLanguage,
-							resident.getThirdLanguage());
+							resident.getThirdLanguage(),contextKey);
 
 				} else {
 					// if(s.getRequired() && (primaryValue == null || primaryValue.equals(""))) {
@@ -1332,7 +1342,7 @@ public class PacketTemplateProvider {
 			}
 
 
-			if (updateFromAdditionalAttribute(identity, s, resident)) {
+			if (updateFromAdditionalAttribute(identity, s, resident,contextKey)) {
 				continue;
 			}
 			if (processDynamicFields(s, identity, resident))
@@ -1372,7 +1382,7 @@ public class PacketTemplateProvider {
 						if (secLanguage != null)
 							secValue = "Y";
 					} else {
-						Pair<String, String> addrLines = processAddresslines(s, resident, identity);
+						Pair<String, String> addrLines = processAddresslines(s, resident, identity, contextKey);
 						primaryValue = addrLines.getValue0();
 						secValue = addrLines.getValue1();
 					}
@@ -1412,7 +1422,7 @@ public class PacketTemplateProvider {
 						if (resident.getSkipFinger()) {
 							bioAttrib.removeAll(List.of(DataProviderConstants.schemaFingerNames));
 						}
-						generateCBEFF(resident, bioAttrib, outFile);
+						generateCBEFF(resident, bioAttrib, outFile,contextKey);
 						/*
 						 * Adding to set cbeff filefor officer and supervisor
 						 */
@@ -1433,10 +1443,10 @@ public class PacketTemplateProvider {
 					        byte[] decoded =Base64.getUrlDecoder().decode(value);
 					        String decodedcbeff = new String(decoded, StandardCharsets.UTF_8);
 					        resident.getBiometric().setCbeff(decodedcbeff);
-							generateCBEFF(resident, bioAttrib, fileInfo.get(RID_FOLDER)[0] + "/"+props.get("mosip.test.regclient.officerBiometricFileName")+".xml");
+							generateCBEFF(resident, bioAttrib, fileInfo.get(RID_FOLDER)[0] + "/"+props.get("mosip.test.regclient.officerBiometricFileName")+".xml",contextKey);
 						}
 							if(props.containsKey("mosip.test.regclient.supervisorBiometricFileName")) {
-						generateCBEFF(resident, bioAttrib, fileInfo.get(RID_FOLDER)[0] +"/"+props.get("mosip.test.regclient.supervisorBiometricFileName")+".xml");
+						generateCBEFF(resident, bioAttrib, fileInfo.get(RID_FOLDER)[0] +"/"+props.get("mosip.test.regclient.supervisorBiometricFileName")+".xml",contextKey);
 							}
 						
 						
@@ -1465,7 +1475,7 @@ public class PacketTemplateProvider {
 							if (missAttribs != null && !missAttribs.isEmpty())
 								bioAttrib.removeAll(missAttribs);
 
-							generateCBEFF(resident.getGuardian(), bioAttrib, outFile);
+							generateCBEFF(resident.getGuardian(), bioAttrib, outFile,contextKey);
 
 						} catch (Exception e) {
 							e.printStackTrace();
@@ -1480,7 +1490,7 @@ public class PacketTemplateProvider {
 							secGValue = resident.getGuardian().getName_seclang().getFirstName();
 
 						updateSimpleType(s.getId(), identity, primValue, secGValue, resident.getPrimaryLanguage(),
-								resident.getSecondaryLanguage(), resident.getThirdLanguage());
+								resident.getSecondaryLanguage(), resident.getThirdLanguage(), contextKey);
 
 					}
 					continue;
@@ -1575,14 +1585,14 @@ public class PacketTemplateProvider {
 				if (primaryValue == null || primaryValue.equals("")) {
 					primaryValue = generateDefaultAttributes(s, resident, identity);
 					if (secLanguage != null) {
-						secValue = Translator.translate(secLanguage, primaryValue);
+						secValue = Translator.translate(secLanguage, primaryValue, contextKey);
 					}
 				}
 
 				if (s.getType().equals("simpleType")) {
 
 					updateSimpleType(s.getId(), identity, primaryValue, secValue, primaryLanguage, secLanguage,
-							resident.getThirdLanguage());
+							resident.getThirdLanguage(), contextKey);
 
 				} else {
 					if (primaryValue.equals(""))
@@ -1605,8 +1615,8 @@ public class PacketTemplateProvider {
 			hostName = contextKey.split("_")[0];
 		else
 			throw new RuntimeException("ContextKey not found !!");
-		
-		String propPath = VariableManager.getVariableValue("mosip.test.env.mapperpath").toString();
+		Boolean contextMapperFound=false;
+		String propPath = VariableManager.getVariableValue(VariableManager.NS_DEFAULT,"mosip.test.env.mapperpath").toString();
 		System.out.println(propPath);
 		try {
 			File folder = new File(String.valueOf(propPath) + File.separator);
@@ -1615,11 +1625,19 @@ public class PacketTemplateProvider {
 				if (file.isFile()) {
 					if (file.getName().contains(hostName + DOMAIN_NAME)) {
 						propPath = file.getAbsolutePath();
+						contextMapperFound=true;
 						break;
 					}
 				}
 			}
-			prop.load(new FileInputStream(propPath));
+			if(contextMapperFound) {
+				prop.load(new FileInputStream(propPath));
+			}
+			else
+			{
+				prop.load(new FileInputStream(propPath+"/Default.properties"));
+			}
+			
 		} catch (FileNotFoundException fnf) {
 			fnf.printStackTrace();
 		} catch (IOException io) {
@@ -1633,7 +1651,7 @@ public class PacketTemplateProvider {
 	String generateMetaDataJson(ResidentModel resident, String preRegistrationId, String machineId, String centerId,
 			HashMap<String, String[]> fileInfo) {
 
-		String templateMetaJsonPath = VariableManager.getVariableValue("templateIDMeta").toString().trim();
+		String templateMetaJsonPath = VariableManager.getVariableValue(VariableManager.NS_DEFAULT,"templateIDMeta").toString().trim();
 
 		String templateIdentityStr = CommonUtil.readFromJSONFile(templateMetaJsonPath);
 		JSONObject templateIdentity = new JSONObject(templateIdentityStr).getJSONObject("identity");
@@ -1765,7 +1783,7 @@ public class PacketTemplateProvider {
 	public static void main(String[] args) {
 
 		ResidentDataProvider provider = new ResidentDataProvider();
-		List<ResidentModel> residents = provider.generate();
+		List<ResidentModel> residents = provider.generate("contextKey");
 		try {
 			new PacketTemplateProvider().generate("registration_client", "new", residents.get(0), "/temp//newpacket",
 					null, null, null,null,null,null);

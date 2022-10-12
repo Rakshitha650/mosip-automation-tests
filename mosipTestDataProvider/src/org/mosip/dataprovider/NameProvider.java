@@ -8,16 +8,22 @@ import org.mosip.dataprovider.util.CommonUtil;
 import org.mosip.dataprovider.util.DataProviderConstants;
 import org.mosip.dataprovider.util.Gender;
 import org.mosip.dataprovider.util.Translator;
+import org.springframework.beans.factory.annotation.Value;
 
 import variables.VariableManager;
 
 public class NameProvider {
 
-	private static String resourceName_male = DataProviderConstants.RESOURCE+"Names/%s/boy_names.csv";
-	private static String resourceName_female = DataProviderConstants.RESOURCE+ "Names/%s/girl_names.csv";
-	private static String resourceName_surname =DataProviderConstants.RESOURCE+ "Names/%s/surnames.csv";
+	private static String resourceName_male ;
+	//= VariableManager.getVariableValue(VariableManager.NS_DEFAULT,"mosip.test.persona.namesdatapath").toString()+"/%s/boy_names.csv";
+	private static String resourceName_female ;
+	//= VariableManager.getVariableValue(VariableManager.NS_DEFAULT,"mosip.test.persona.namesdatapath").toString()+"/%s/girl_names.csv";
+	private static String resourceName_surname;
+	//=VariableManager.getVariableValue(VariableManager.NS_DEFAULT,"mosip.test.persona.namesdatapath").toString()+"/%s/surnames.csv";
 	
-	static String[] getSurNames(String lang, int count) {
+	static String[] getSurNames(String lang, int count,String contextKey) {
+		resourceName_surname =VariableManager.getVariableValue(VariableManager.NS_DEFAULT,"mosip.test.persona.namesdatapath").toString()+"/%s/surnames.csv";
+		
 		String resPath = String.format(resourceName_surname, lang);
 		String [] values = new String[count];
 		int i=0;
@@ -45,17 +51,17 @@ public class NameProvider {
 		return values;
 		
 	}
-	public static List<Name> generateNames(Gender gender,String lang, int count,List<Name> engNames ){
+	public static List<Name> generateNames(Gender gender,String lang, int count,List<Name> engNames,String contextKey ){
 	
 		List<Name> names = null;
 		if(engNames == null) 
-			names = generateNamesWrapper(gender,  count);
+			names = generateNamesWrapper(gender,  count,contextKey);
 		else names = engNames;
 			
 		if(!lang.startsWith("en")) {
 			List<Name> namesLang = new ArrayList<Name>();
 			for(Name name: names) {
-				Name langName = Translator.translateName( lang, name);
+				Name langName = Translator.translateName( lang, name,contextKey);
 				namesLang.add(langName);
 			}
 			names = namesLang;
@@ -63,7 +69,7 @@ public class NameProvider {
 		
 		return names;
 	}
-	static List<Name> generateNamesWrapper(Gender gender, int count){
+	static List<Name> generateNamesWrapper(Gender gender, int count,String contextKey){
 		/*
 		syntheticnames=true
 				syntheticmidname=true
@@ -72,7 +78,7 @@ public class NameProvider {
 				syntheticmidnamelen=50
 				syntheticlastnamelen=50
 		 */
-		Object objAttr = VariableManager.getVariableValue("syntheticnames");
+		Object objAttr = VariableManager.getVariableValue(VariableManager.NS_DEFAULT,"syntheticnames");
 		boolean bValue = objAttr == null ? false :  Boolean.parseBoolean(objAttr.toString());
 		if(bValue) {
 		
@@ -80,7 +86,7 @@ public class NameProvider {
 		}
 		else
 		{
-			return generateNames(gender,count);
+			return generateNames(gender,count,contextKey);
 		}
 		
 	}
@@ -96,16 +102,16 @@ public class NameProvider {
 	static List<Name> generateSynthNames(Gender gender, int count){
 		String lang ="en"; 
 		List<Name> names = new ArrayList<Name>();
-		Object objAttr = VariableManager.getVariableValue("syntheticmidname");
+		Object objAttr = VariableManager.getVariableValue(VariableManager.NS_DEFAULT,"syntheticmidname");
 		boolean bValue = objAttr == null ? false : Boolean.parseBoolean(objAttr.toString());
-		objAttr = VariableManager.getVariableValue("syntheticfirstnamelen");
+		objAttr = VariableManager.getVariableValue(VariableManager.NS_DEFAULT,"syntheticfirstnamelen");
 		int fNameLen = objAttr == null ? 30: Integer.parseInt(objAttr.toString());
 	
-		objAttr = VariableManager.getVariableValue("syntheticmidnamelen");
+		objAttr = VariableManager.getVariableValue(VariableManager.NS_DEFAULT,"syntheticmidnamelen");
 		
 		int mNameLen = objAttr == null ? 30: Integer.parseInt(objAttr.toString());
 		
-		objAttr = VariableManager.getVariableValue("syntheticlastnamelen");
+		objAttr = VariableManager.getVariableValue(VariableManager.NS_DEFAULT,"syntheticlastnamelen");
 		int lNameLen = objAttr == null ? 30: Integer.parseInt(objAttr.toString());
 		
 		for(int i=0; i < count; i++) {
@@ -122,7 +128,7 @@ public class NameProvider {
 		
 	}
 	 
-	static List<Name> generateNames(Gender gender, int count){
+	static List<Name> generateNames(Gender gender, int count,String contextKey){
 	
 		String lang ="en"; 
 		List<Name> names = new ArrayList<Name>();
@@ -131,12 +137,16 @@ public class NameProvider {
 		Gender recGender = Gender.Female;
 		
 		if(gender == Gender.Male) {
+		 resourceName_male = VariableManager.getVariableValue(VariableManager.NS_DEFAULT,"mosip.test.persona.namesdatapath").toString()+"/%s/boy_names.csv";
+			
 			resPath = String.format(resourceName_male, lang);
 			recGender = Gender.Male;
 		}
 		else
+		{
+			resourceName_female = VariableManager.getVariableValue(VariableManager.NS_DEFAULT,"mosip.test.persona.namesdatapath").toString()+"/%s/girl_names.csv";
 			resPath = String.format(resourceName_female, lang);
-		
+		}		
 		try {
 			CSVHelper helper;
 			
@@ -148,7 +158,7 @@ public class NameProvider {
 			
 			List<String[]> recs = helper.readRecords( recNos);
 			
-			String[] surNames = getSurNames(lang, count); 
+			String[] surNames = getSurNames(lang, count,contextKey); 
 			Name name = new Name();
 			int i=0;
 			for(String[] r: recs) {

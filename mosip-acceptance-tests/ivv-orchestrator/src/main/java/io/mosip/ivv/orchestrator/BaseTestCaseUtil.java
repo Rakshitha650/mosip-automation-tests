@@ -66,6 +66,8 @@ public class BaseTestCaseUtil extends BaseStep{
 	public static String uin_updateResident=null;
 	public static String prid_updateResident=null;
 	public static String scenario = null;
+	public static String partnerKeyUrl = null;
+	public static String partnerId = null;
 	public BaseTestCaseUtil() {}
 	
 	public String getDateTime() {
@@ -154,8 +156,11 @@ public class BaseTestCaseUtil extends BaseStep{
 		return filteredCases.toArray();
 	}
 	
-	
+	protected static String addContextToUrl(String url) {
+		return url + "/" + System.getProperty("env.user")+"_context";
+	}
 	public static Response getRequest(String url, String opsToLog) {
+		url=addContextToUrl(url);
 		Reporter.log("<pre> <b>" + opsToLog + ": </b> <br/></pre>");
 		Response getResponse = given().relaxedHTTPSValidation().contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON).log().all().when().get(url).then().log().all().extract().response();
@@ -165,6 +170,7 @@ public class BaseTestCaseUtil extends BaseStep{
 	}
 	
 	public static Response getRequestWithQueryParam(String url, HashMap<String,String> contextKey,String opsToLog) {
+		url=addContextToUrl(url);
 		Reporter.log("<pre> <b>" + opsToLog + ": </b> <br/></pre>");
 		Response getResponse = given().relaxedHTTPSValidation().queryParams(contextKey)
 				.accept("*/*").log().all().when().get(url).then().log().all().extract().response();
@@ -173,13 +179,15 @@ public class BaseTestCaseUtil extends BaseStep{
 		return getResponse;
 	}
 	
-	public Response postReqest(String url,String body,String opsToLog) {
+	public Response postRequest(String url,String body,String opsToLog) {
+		url=addContextToUrl(url);
 		Reporter.log("<pre> <b>"+opsToLog+": </b> <br/>"+body + "</pre>");
 		Response apiResponse = RestClient.postRequest(url, body, MediaType.APPLICATION_JSON, MediaType.APPLICATION_JSON);
 		Reporter.log("<b><u>Actual Response Content: </u></b>(EndPointUrl: " + url + ") <pre>"+ apiResponse.getBody().asString() + "</pre>");
 		return apiResponse;
 	}
 	public Response putReqestWithBody(String url,String body,String opsToLog) {
+		url=addContextToUrl(url);
 		Reporter.log("<pre> <b>"+opsToLog+": </b> <br/>"+body + "</pre>");
 		Response puttResponse = given().relaxedHTTPSValidation().body(body).contentType(MediaType.APPLICATION_JSON)
 				.accept("*/*").log().all().when().put(url).then().log().all().extract().response();
@@ -188,6 +196,7 @@ public class BaseTestCaseUtil extends BaseStep{
 	}
 	
 	public Response putReqest(String url,String opsToLog) {
+		url=addContextToUrl(url);
 		Reporter.log("<pre> <b>" + opsToLog + ": </b> <br/></pre>");
 		Response putResponse = given().relaxedHTTPSValidation().contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON).log().all().when().put(url).then().log().all().extract().response();
@@ -197,6 +206,7 @@ public class BaseTestCaseUtil extends BaseStep{
 	}
 	
 	public Response deleteReqest(String url,String opsToLog) {
+		url=addContextToUrl(url);
 		Reporter.log("<pre> <b>" + opsToLog + ": </b> <br/></pre>");
 		Response deleteResponse = given().relaxedHTTPSValidation().contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON).log().all().when().delete(url).then().log().all().extract().response();
@@ -206,6 +216,7 @@ public class BaseTestCaseUtil extends BaseStep{
 	}
 	
 	public Response deleteReqestWithQueryParam(String url,HashMap<String,String> contextKey,String opsToLog) {
+		url=addContextToUrl(url);
 		Reporter.log("<pre> <b>" + opsToLog + ": </b> <br/></pre>");
 		Response deleteResponse = given().relaxedHTTPSValidation().queryParams(contextKey)
 				.accept("*/*").log().all().when().delete(url).then().log().all().extract().response();
@@ -215,6 +226,7 @@ public class BaseTestCaseUtil extends BaseStep{
 	}
 	
 	public Response putRequestWithQueryParamAndBody(String url, String body, HashMap<String,String> contextKey, String opsToLog) {
+		url=addContextToUrl(url);
 		Reporter.log("<pre> <b>" + opsToLog + ": </b> <br/>" + body + "</pre>");
 		Response apiResponse = RestClient.putRequestWithQueryParamAndBody(url, body, contextKey,MediaType.APPLICATION_JSON,
 				"*/*");
@@ -224,6 +236,7 @@ public class BaseTestCaseUtil extends BaseStep{
 	}
 	
 	public Response postRequestWithQueryParamAndBody(String url, String body, HashMap<String,String> contextKey, String opsToLog) {
+		url=addContextToUrl(url);
 		Reporter.log("<pre> <b>" + opsToLog + ": </b> <br/>" + body + "</pre>");
 		Response apiResponse = RestClient.postRequestWithQueryParamAndBody(url, body, contextKey,MediaType.APPLICATION_JSON,
 				MediaType.APPLICATION_JSON);
@@ -233,6 +246,7 @@ public class BaseTestCaseUtil extends BaseStep{
 	}
 	
 	public Response postRequestWithPathParamAndBody(String url, String body, HashMap<String,String> contextKey, String opsToLog) {
+		url=addContextToUrl(url);
 		Reporter.log("<pre> <b>" + opsToLog + ": </b> <br/>" + body + "</pre>");
 		Response apiResponse = given().contentType(ContentType.JSON).pathParams(contextKey).body(body)
 				.log().all().when().post(url).then().log().all().extract().response();
@@ -242,6 +256,7 @@ public class BaseTestCaseUtil extends BaseStep{
 	}
 	
 	public Response postReqestWithCookiesAndBody(String url, String body, String token, String opsToLog) {
+		url=addContextToUrl(url);
 		Reporter.log("<pre> <b>" + opsToLog + ": </b> <br/>" + body + "</pre>");
 		Response posttResponse = given().relaxedHTTPSValidation().body(body).contentType(MediaType.APPLICATION_JSON)
 				.accept("*/*").log().all().when().cookie("Authorization", token).post(url).then().log().all().extract()
@@ -252,6 +267,7 @@ public class BaseTestCaseUtil extends BaseStep{
 	}
 	
 	public Response putRequestWithQueryParam(String url, HashMap<String, String> queryParams,String opsToLog) {
+		url=addContextToUrl(url);
 		Reporter.log("<pre> <b>" + opsToLog + ": </b> <br/></pre>");
 		Response puttResponse = given().queryParams(queryParams).relaxedHTTPSValidation().log().all().when().put(url)
 				.then().log().all().extract().response();

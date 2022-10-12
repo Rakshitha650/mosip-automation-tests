@@ -34,6 +34,9 @@ import org.mosip.dataprovider.test.CreatePersona;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.fasterxml.jackson.databind.ObjectWriter;
+
+import variables.VariableManager;
+
 import org.springframework.util.StringUtils;
 
 @Service
@@ -46,7 +49,7 @@ public class PacketMakerService {
 	private static final String PACKET_DATA_HASH_FILENAME = "packet_data_hash.txt";
 	private static final String PACKET_OPERATION_HASH_FILENAME = "packet_operations_hash.txt";
 
-	@Value("${mosip.test.temp:/tmp/}")
+	//@Value("${mosip.test.temp:/tmp/}")
 	private String tempLogPath;
 
 	@Value("${mosip.test.regclient.store:/home/sasikumar/Documents/MOSIP/packetcreator}")
@@ -493,12 +496,15 @@ public class PacketMakerService {
 
 		//
 
+		try {
+			
+			
 		String schemaVersion = jb.optString("IDSchemaVersion", "0");
 		String schemaJson = schemaUtil.getAndSaveSchema(schemaVersion, workDirectory, contextKey);
 
 		if (type.equals("id")) {
 
-			Files.write(Path.of(tempLogPath + regId + "_schema.json"), schemaJson.getBytes());
+			Files.write(Path.of(VariableManager.getVariableValue(contextKey,"mosip.test.temp").toString() + regId + "_schema.json"), schemaJson.getBytes());
 
 		}
 		/*
@@ -512,8 +518,8 @@ public class PacketMakerService {
 		JSONObject mergedJsonMap = mergeJSONObject(templateFile, jbToMerge);
 
 		if (type.equals("id")) {
-			List<String> invalidIds = CreatePersona.validateIDObject(mergedJsonMap);
-			Files.write(Path.of(tempLogPath + regId + "_invalidIds.json"), invalidIds.toString().getBytes());
+			List<String> invalidIds = CreatePersona.validateIDObject(mergedJsonMap,contextKey);
+			Files.write(Path.of(VariableManager.getVariableValue(contextKey,"mosip.test.temp").toString() + regId + "_invalidIds.json"), invalidIds.toString().getBytes());
 		}
 
 		if (!writeJSONFile(mergedJsonMap.toMap(), templateFile)) {
@@ -606,6 +612,11 @@ public class PacketMakerService {
 			updatePacketDataHash(packetRootFolder, sequence, PACKET_DATA_HASH_FILENAME);
 			updatePacketDataHash(packetRootFolder, operations_seq, PACKET_OPERATION_HASH_FILENAME);
 		}
+		}
+		catch(Exception e)
+	    			{
+			e.printStackTrace();
+	    			}
 		return true;
 	}
 
@@ -624,7 +635,7 @@ public class PacketMakerService {
 				cryptoUtil.sign(Files.readAllBytes(Path.of(Path.of(containerRootFolder) + "_unenc.zip")), contextKey));
 
 		Path src = Path.of(containerRootFolder + "_unenc.zip");
-		Files.copy(src, Path.of(tempLogPath + src.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+		Files.copy(src, Path.of(VariableManager.getVariableValue(contextKey,"mosip.test.temp").toString() + src.getFileName()), StandardCopyOption.REPLACE_EXISTING);
 
 		Files.delete(Path.of(containerRootFolder + "_unenc.zip"));
 		FileSystemUtils.deleteRecursively(Path.of(containerRootFolder));
@@ -640,7 +651,7 @@ public class PacketMakerService {
 
 		Path src = Path.of(path + "_unenc.zip");
 
-		Files.copy(src, Path.of(tempLogPath + src.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+		Files.copy(src, Path.of(VariableManager.getVariableValue(contextKey,"mosip.test.temp").toString() + src.getFileName()), StandardCopyOption.REPLACE_EXISTING);
 
 		Files.delete(Path.of(path + "_unenc.zip"));
 		return result;
